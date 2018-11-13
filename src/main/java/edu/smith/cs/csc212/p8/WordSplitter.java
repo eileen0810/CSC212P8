@@ -30,7 +30,7 @@ public class WordSplitter {
 		for (String token : spacesOrPunctuation.split(text.toLowerCase())) {
 			token = token.trim();
 			if (token.isEmpty()) {
-				continue;
+				continue; 
 			}
 			
 			words.add(token);
@@ -38,5 +38,7 @@ public class WordSplitter {
 		
 		return words;
 	}
+	
+	
 
 }

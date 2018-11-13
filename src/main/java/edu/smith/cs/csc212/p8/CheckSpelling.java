@@ -30,6 +30,44 @@ public class CheckSpelling {
 	}
 	
 	/**
+	 * Read the lines from a small book
+	 * @return a list of the words
+	 */
+	
+	public static List<String> loadReadMe() {
+		List<String> lines;
+		List<String> returningList = new ArrayList<>();
+		try {
+			lines = Files.readAllLines(new File("src/main/resources/smallBook").toPath());
+			for (String line:lines) {
+				List<String> wordsInBook = WordSplitter.splitTextToWords(line);
+				returningList.addAll(wordsInBook);
+			}
+		} catch (IOException e) {
+			throw new RuntimeException("Couldn't find Read Me.", e);
+		}
+		return returningList;
+	}
+	
+	/**
+	 * Looks for all the misSpelled words in the book
+	 * @param wordsInBook
+	 * @param dictionary
+	 * @return all the misSpelled words
+	 */
+	public static List<String> misSpelled(List<String>wordsInBook, Collection<String> dictionary) {
+		List<String> newList = new ArrayList<>();
+
+		for (String w : wordsInBook) {
+			if (!dictionary.contains(w))  {
+					newList.add(w);
+				}
+			}
+		
+		return newList;
+	}
+	
+	/**
 	 * This method looks for all the words in a dictionary.
 	 * @param words - the "queries"
 	 * @param dictionary - the data structure.
@@ -43,7 +81,6 @@ public class CheckSpelling {
 				found++;
 			}
 		}
-		
 		long endLookup = System.nanoTime();
 		double fractionFound = found / (double) words.size();
 		double timeSpentPerItem = (endLookup - startLookup) / ((double) words.size());
@@ -51,23 +88,69 @@ public class CheckSpelling {
 		System.out.println(dictionary.getClass().getSimpleName()+": Lookup of items found="+fractionFound+" time="+nsPerItem+" ns/item");
 	}
 	
+	public static List<String> createMixedDataset(List<String> words, int numSample, double fractionYes) {
+		List<String> yesWords = new ArrayList<>();
+
+		int size = words.size();
+
+		for (int i = 0; i < size; i+= size/numSample) {
+			String word = words.get(i);
+			yesWords.add(word);
+		}
+
+		fractionYes = fractionYes * yesWords.size();
+		for (int i = 0; i < fractionYes; i++) {
+			yesWords.add(i, yesWords.get(i) + "zzzzz");
+			yesWords.remove(i);
+		}
+		return yesWords;
+	}
+	
 	
 	public static void main(String[] args) {
 		// --- Load the dictionary.
 		List<String> listOfWords = loadDictionary();
 		
+		// --- Load the book.
+		List<String> wordsInBook = loadReadMe();
+	
 		// --- Create a bunch of data structures for testing:
+		
+		long startTreeTime = System.nanoTime();
 		TreeSet<String> treeOfWords = new TreeSet<>(listOfWords);
+		long endTreeTime = System.nanoTime();
+		double timeSpentTree = (endTreeTime - startTreeTime) / 1e9;
+		System.out.println("TreeSet Time: "+ timeSpentTree + " ns/insert");
+		
+		long startHashTime = System.nanoTime();
 		HashSet<String> hashOfWords = new HashSet<>(listOfWords);
+		long endHashTime = System.nanoTime();
+		double timeSpentHash = (endHashTime - startHashTime) / 1e9;
+		System.out.println("HashSet Time: " +timeSpentHash +" ns/insert");
+				
+		long startSortedStringTime = System.nanoTime();
 		SortedStringListSet bsl = new SortedStringListSet(listOfWords);
+		long endSortedStringTime = System.nanoTime();
+		double timeSpentSortedString = (endSortedStringTime - startSortedStringTime) / 1e9;
+		System.out.println("SortedStringListSet Time: " +timeSpentSortedString +" ns/insert");
+		
+		long startCharTrieTime = System.nanoTime();
 		CharTrie trie = new CharTrie();
 		for (String w : listOfWords) {
 			trie.insert(w);
 		}
+		long endCharTrieTime = System.nanoTime();
+		double timeSpentCharTrie = (endCharTrieTime - startCharTrieTime) / 1e9;
+		System.out.println("CharTrie Time: " +timeSpentCharTrie + " ns/insert" );
+		
+		long startLLHashTime = System.nanoTime();
 		LLHash hm100k = new LLHash(100000);
 		for (String w : listOfWords) {
 			hm100k.add(w);
 		}
+		long endLLHashTime = System.nanoTime();
+		double timeSpentLLHash = (endLLHashTime - startLLHashTime) / 1e9;
+		System.out.println("LLHash Time: " +timeSpentLLHash + " ns/insert");
 		
 		// --- Make sure that every word in the dictionary is in the dictionary:
 		timeLookup(listOfWords, treeOfWords);
@@ -76,15 +159,16 @@ public class CheckSpelling {
 		timeLookup(listOfWords, trie);
 		timeLookup(listOfWords, hm100k);
 		
+		for (int i=0; i<11; i++) {
+		    double fraction = i / 10.0;
 		// --- Create a dataset of mixed hits and misses:
-		List<String> hitsAndMisses = new ArrayList<>();
-		// TODO, do this.
+	    List<String> hitsAndMisses = createMixedDataset(listOfWords, 10000, fraction);
 		timeLookup(hitsAndMisses, treeOfWords);
 		timeLookup(hitsAndMisses, hashOfWords);
 		timeLookup(hitsAndMisses, bsl);
 		timeLookup(hitsAndMisses, trie);
 		timeLookup(hitsAndMisses, hm100k);
-
+		}
 		
 		// --- linear list timing:
 		// Looking up in a list is so slow, we need to sample:
@@ -105,6 +189,23 @@ public class CheckSpelling {
 		
 		System.out.println("log_2 of listOfWords.size(): "+listOfWords.size());
 		
+		// --- Print book info
+		List<String> newList = misSpelled(wordsInBook ,listOfWords);
+		int found =0;
+		for (int i=0; i<newList.size();i++) {
+			found++;
+		}
+		double sizeOfBook = wordsInBook.size();
+		double ratio = found/sizeOfBook;
+		System.out.println("The ratio of the misSpelled words in the book is : " +ratio);
+		
+		timeLookup(newList, treeOfWords);
+		timeLookup(newList, hashOfWords);
+		timeLookup(newList, bsl);
+		timeLookup(newList, trie);
+		timeLookup(newList, hm100k);
+		
 		System.out.println("Done!");
 	}
 }
+
