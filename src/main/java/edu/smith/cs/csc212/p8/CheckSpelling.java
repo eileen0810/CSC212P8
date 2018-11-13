@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 
 public class CheckSpelling {
@@ -98,10 +97,12 @@ public class CheckSpelling {
 			yesWords.add(word);
 		}
 
-		fractionYes = fractionYes * yesWords.size();
-		for (int i = 0; i < fractionYes; i++) {
-			yesWords.add(i, yesWords.get(i) + "zzzzz");
-			yesWords.remove(i);
+		double fractionNo =(1- fractionYes) * yesWords.size();
+		for (int i = 0; i < fractionNo; i++) {
+			if (yesWords.size() > 0) {
+				yesWords.remove(0);
+			}
+			yesWords.add(words.get(i) + "zzzzz");
 		}
 		return yesWords;
 	}
@@ -118,20 +119,21 @@ public class CheckSpelling {
 		
 		long startTreeTime = System.nanoTime();
 		TreeSet<String> treeOfWords = new TreeSet<>(listOfWords);
+		
 		long endTreeTime = System.nanoTime();
-		double timeSpentTree = (endTreeTime - startTreeTime) / 1e9;
+		double timeSpentTree = (endTreeTime - startTreeTime) / treeOfWords.size();
 		System.out.println("TreeSet Time: "+ timeSpentTree + " ns/insert");
 		
 		long startHashTime = System.nanoTime();
 		HashSet<String> hashOfWords = new HashSet<>(listOfWords);
 		long endHashTime = System.nanoTime();
-		double timeSpentHash = (endHashTime - startHashTime) / 1e9;
+		double timeSpentHash = (endHashTime - startHashTime) / hashOfWords.size();
 		System.out.println("HashSet Time: " +timeSpentHash +" ns/insert");
 				
 		long startSortedStringTime = System.nanoTime();
 		SortedStringListSet bsl = new SortedStringListSet(listOfWords);
 		long endSortedStringTime = System.nanoTime();
-		double timeSpentSortedString = (endSortedStringTime - startSortedStringTime) / 1e9;
+		double timeSpentSortedString = (endSortedStringTime - startSortedStringTime) / bsl.size();
 		System.out.println("SortedStringListSet Time: " +timeSpentSortedString +" ns/insert");
 		
 		long startCharTrieTime = System.nanoTime();
@@ -140,7 +142,7 @@ public class CheckSpelling {
 			trie.insert(w);
 		}
 		long endCharTrieTime = System.nanoTime();
-		double timeSpentCharTrie = (endCharTrieTime - startCharTrieTime) / 1e9;
+		double timeSpentCharTrie = (endCharTrieTime - startCharTrieTime) / trie.size();
 		System.out.println("CharTrie Time: " +timeSpentCharTrie + " ns/insert" );
 		
 		long startLLHashTime = System.nanoTime();
@@ -149,7 +151,7 @@ public class CheckSpelling {
 			hm100k.add(w);
 		}
 		long endLLHashTime = System.nanoTime();
-		double timeSpentLLHash = (endLLHashTime - startLLHashTime) / 1e9;
+		double timeSpentLLHash = (endLLHashTime - startLLHashTime) / hm100k.size();
 		System.out.println("LLHash Time: " +timeSpentLLHash + " ns/insert");
 		
 		// --- Make sure that every word in the dictionary is in the dictionary:
@@ -199,11 +201,11 @@ public class CheckSpelling {
 		double ratio = found/sizeOfBook;
 		System.out.println("The ratio of the misSpelled words in the book is : " +ratio);
 		
-		timeLookup(newList, treeOfWords);
-		timeLookup(newList, hashOfWords);
-		timeLookup(newList, bsl);
-		timeLookup(newList, trie);
-		timeLookup(newList, hm100k);
+		timeLookup(wordsInBook, treeOfWords);
+		timeLookup(wordsInBook, hashOfWords);
+		timeLookup(wordsInBook, bsl);
+		timeLookup(wordsInBook, trie);
+		timeLookup(wordsInBook, hm100k);
 		
 		System.out.println("Done!");
 	}
