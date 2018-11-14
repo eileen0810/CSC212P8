@@ -25,6 +25,7 @@ public class CheckSpelling {
 		long end = System.nanoTime();
 		double time = (end - start) / 1e9;
 		System.out.println("Loaded " + words.size() + " entries in " + time +" seconds.");
+		System.out.println("-----------------------------------------------------------");
 		return words;
 	}
 	
@@ -85,6 +86,7 @@ public class CheckSpelling {
 		double timeSpentPerItem = (endLookup - startLookup) / ((double) words.size());
 		int nsPerItem = (int) timeSpentPerItem;
 		System.out.println(dictionary.getClass().getSimpleName()+": Lookup of items found="+fractionFound+" time="+nsPerItem+" ns/item");
+		
 	}
 	
 	public static List<String> createMixedDataset(List<String> words, int numSample, double fractionYes) {
@@ -116,19 +118,40 @@ public class CheckSpelling {
 		List<String> wordsInBook = loadReadMe();
 	
 		// --- Create a bunch of data structures for testing:
-		
+	
+		//Input Data
 		long startTreeTime = System.nanoTime();
 		TreeSet<String> treeOfWords = new TreeSet<>(listOfWords);
-		
 		long endTreeTime = System.nanoTime();
 		double timeSpentTree = (endTreeTime - startTreeTime) / treeOfWords.size();
-		System.out.println("TreeSet Time: "+ timeSpentTree + " ns/insert");
+		System.out.println("TreeSet Input Data Time: "+ timeSpentTree + " ns/insert");
 		
+		//For loop
+		long startTreeTime2 = System.nanoTime();
+		TreeSet<String> treeOfWords2 = new TreeSet<>();
+		for (String w : listOfWords) {
+			treeOfWords2.add(w);
+		}
+		long endTreeTime2 = System.nanoTime();
+		double timeSpentTree2 = (endTreeTime2 - startTreeTime2) / treeOfWords.size();
+		System.out.println("TreeSet Loop Time: "+ timeSpentTree2 + " ns/insert");
+		
+		//Input Data
 		long startHashTime = System.nanoTime();
 		HashSet<String> hashOfWords = new HashSet<>(listOfWords);
 		long endHashTime = System.nanoTime();
 		double timeSpentHash = (endHashTime - startHashTime) / hashOfWords.size();
-		System.out.println("HashSet Time: " +timeSpentHash +" ns/insert");
+		System.out.println("HasSet Time Input Data: "+ timeSpentHash + " ns/insert");
+				
+		//For loop
+		long startHashTime2 = System.nanoTime();
+		HashSet<String> hashOfWords2 = new HashSet<>();
+		for (String w : listOfWords) {
+			hashOfWords2.add(w);
+		}
+		long endHashTime2 = System.nanoTime();
+		double timeSpentHash2 = (endHashTime2 - startHashTime2) / hashOfWords2.size();
+		System.out.println("HashSet Loop Time: " +timeSpentHash2 +" ns/insert");
 				
 		long startSortedStringTime = System.nanoTime();
 		SortedStringListSet bsl = new SortedStringListSet(listOfWords);
@@ -153,14 +176,19 @@ public class CheckSpelling {
 		long endLLHashTime = System.nanoTime();
 		double timeSpentLLHash = (endLLHashTime - startLLHashTime) / hm100k.size();
 		System.out.println("LLHash Time: " +timeSpentLLHash + " ns/insert");
+		System.out.println("---------------------------------------------------------");
 		
 		// --- Make sure that every word in the dictionary is in the dictionary:
+		System.out.println("This is the timeLookup for Query Speed Section 2");
 		timeLookup(listOfWords, treeOfWords);
 		timeLookup(listOfWords, hashOfWords);
 		timeLookup(listOfWords, bsl);
 		timeLookup(listOfWords, trie);
 		timeLookup(listOfWords, hm100k);
+		System.out.println("---------------------------------------------------------");
+		System.out.println("---------------------------------------------------------");
 		
+		System.out.println("Section 3 for book");
 		for (int i=0; i<11; i++) {
 		    double fraction = i / 10.0;
 		// --- Create a dataset of mixed hits and misses:
@@ -170,6 +198,7 @@ public class CheckSpelling {
 		timeLookup(hitsAndMisses, bsl);
 		timeLookup(hitsAndMisses, trie);
 		timeLookup(hitsAndMisses, hm100k);
+		System.out.println("---------------------------------------------------------");
 		}
 		
 		// --- linear list timing:
@@ -192,11 +221,13 @@ public class CheckSpelling {
 		System.out.println("log_2 of listOfWords.size(): "+listOfWords.size());
 		
 		// --- Print book info
+		System.out.println("---------------------------------------------------------");
 		List<String> newList = misSpelled(wordsInBook ,listOfWords);
 		int found =0;
 		for (int i=0; i<newList.size();i++) {
 			found++;
 		}
+		//System.out.println(newList);
 		double sizeOfBook = wordsInBook.size();
 		double ratio = found/sizeOfBook;
 		System.out.println("The ratio of the misSpelled words in the book is : " +ratio);
@@ -207,6 +238,7 @@ public class CheckSpelling {
 		timeLookup(wordsInBook, trie);
 		timeLookup(wordsInBook, hm100k);
 		
+		System.out.println("---------------------------------------------------------");
 		System.out.println("Done!");
 	}
 }

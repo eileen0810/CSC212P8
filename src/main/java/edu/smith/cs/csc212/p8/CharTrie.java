@@ -1,8 +1,10 @@
 package edu.smith.cs.csc212.p8;
 
 import java.util.AbstractSet;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * This is a Character Trie that stores Strings!
@@ -121,6 +123,12 @@ public class CharTrie extends AbstractSet<String> {
 		 */
 		public int countNodes() {
 			int count = 1;
+			for (int i =0; i<links.length; i++) {
+				if (this.links[i] != null) {
+					count += this.links[i].countNodes();
+				}
+			}
+			
 			// loop over links
 			// if they're not null
 			// count them, too
